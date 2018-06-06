@@ -4,12 +4,15 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.sql.*;
 import javax.sql.*;
+
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.*;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
 /*
@@ -19,7 +22,7 @@ import javax.servlet.http.*;
 public class reqDispatch extends HttpServlet {
     static DataSource ds;                           // dataSource for connection pooling 
     static Queue query;                             // request saving queue
-    static final byte BATCH_SIZE = 0;               // size of elements to be queued for one batch
+    static final byte BATCH_SIZE = 10;               // size of elements to be queued for one batch
     static boolean processFlag = false;             //flag to check entry in executeBatch() by multiple threads
     static boolean threadFlag = false;              //flag to check timer thread don't run while executeBatch() in use by worker thread
     
@@ -32,14 +35,14 @@ public class reqDispatch extends HttpServlet {
 
        query.add(request);
        
-       if (query.size() >= BATCH_SIZE && processFlag == false){
-           processFlag = true;
-           System.out.println("if entered");
-           processable.addAll(query);
-           if(executeBatch(processable)){  
-        	   System.out.println("execut batch runnng");
-               query.removeAll(processable);
-           }
+       if (query.size() > BATCH_SIZE && processFlag == false){
+    	   synchronized (query) {
+    		   processFlag = true;
+    		   processable.addAll(query);
+    		   if(executeBatch(processable)){  
+    			   query.removeAll(processable);
+    		   }
+    	   }
            processFlag = false;
        }
 
@@ -60,7 +63,7 @@ public class reqDispatch extends HttpServlet {
         }
     }
     
-    public boolean executeBatch(Queue<HttpServletRequest> queue){
+    public synchronized boolean  executeBatch(Queue<HttpServletRequest> queue){
        
         threadFlag = true;
         final String DRIVER="com.mysql.jdbc.Driver",
@@ -71,7 +74,7 @@ public class reqDispatch extends HttpServlet {
         boolean status = false;
         HttpServletRequest query;
         Iterator<HttpServletRequest> itr = queue.iterator();
-        String[] param = {"$1","$2","$3","$4","$5","$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17"};      //replace with parameter name here
+        String[] param = {"param1","param2","param3","param4","param5","param6","param7","param8","param9","param10","param11","param12","param13","param14","param15","param16","param17"};      //replace with parameter name here
         
         try{
 //                Class.forName(DRIVER);
@@ -125,7 +128,6 @@ public class reqDispatch extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init(); //To change body of generated methods, choose Tools | Templates.
-        System.out.println("started the heck");
         
         
         try {
@@ -138,34 +140,27 @@ public class reqDispatch extends HttpServlet {
         
         query = new LinkedList<>();
         
-//        Thread timedUpdate = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                Queue<HttpServletRequest> processable = new LinkedList<>();
-//                while(true){
-//                    if(threadFlag == false && !query.isEmpty()){
-//                        try {
-//                            Thread.sleep(2*60*60*1000);
-//                        } catch (InterruptedException ex) {
-//                            Logger.getLogger(reqDispatch.class.getName()).log(Level.SEVERE, null, ex);
-//                            System.out.println(ex);
-//                        }
-//                          
-//                        processFlag = true;
-//                        processable.addAll(query);
-//                        if(executeBatch(processable)){                 
-//                        query.removeAll(processable);
-//                        processFlag = false;
-//           }
-//                      
-//                    }
-//                }
-//            }
-//        });
-//        
-//        timedUpdate.start();
+        TimerTask timedClean = new TimerTask() {
+        	Queue<HttpServletRequest> processable = new LinkedList<>();
+			@Override
+			public void run() {
+				synchronized (query) {
+					processFlag = true;
+		            processable.addAll(query);
+		            if(executeBatch(processable)){                 
+		            	query.removeAll(processable);
+		            	processFlag = false;
+		            }
+				}
+			}
+		};
+		
+		Timer timer = new Timer(true);
+		timer.scheduleAtFixedRate(timedClean,2*60*60*1000, 2*60*60*1000); 
+    System.out.println("timer running");
+        
+
     }
-    
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
