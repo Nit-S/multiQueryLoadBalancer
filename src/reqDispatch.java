@@ -1,3 +1,5 @@
+// the servlet that will receive parameters and handles data base functionality
+
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -5,10 +7,11 @@ import java.util.*;
 import java.sql.*;
 import javax.sql.*;
 
+import clarotest.DataObj;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.naming.Context;7
+import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.*;
@@ -22,7 +25,7 @@ import javax.servlet.http.*;
 public class reqDispatch extends HttpServlet {
 	static DataSource ds;                           // dataSource for connection pooling 
 	static Queue query;                             // request saving queue
-	static final byte BATCH_SIZE = 10;              // size of elements to be queued for one batch
+	static final byte BUFFER_SIZE = 10;             // size of elements to be queued for one batch
 	static boolean processFlag = false;             //flag to check entry in executeBatch() by multiple threads
 	static boolean threadFlag = false;              //flag to check timer thread don't run while executeBatch() in use by worker thread
 
@@ -31,11 +34,35 @@ public class reqDispatch extends HttpServlet {
 	protected void processRequest(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("text/html;charset=UTF-8");
-		Queue<HttpServletRequest> processable = new LinkedList<>();
+		Queue<DataObj> processable = new LinkedList<>();          // queue to store batch to be processed 
+		
+		// change name of parameters here as per required
+		String[] param = {"param1","param2","param3","param4","param5","param6","param7","param8","param9","param10","param11","param12","param13","param14","param15","param16","param17"};      //replace with parameter name here
 
-		query.add(request);
+		// creation of object to store requested query 
+		DataObj dataObj = new DataObj(request.getParameter(param[0]),
+				request.getParameter(param[0]),
+				request.getParameter(param[0]),
+				request.getParameter(param[0]),
+				Long.parseLong(request.getParameter(param[4])),
+				Long.parseLong(request.getParameter(param[4])),
+				Long.parseLong(request.getParameter(param[4])),
+				Long.parseLong(request.getParameter(param[4])),
+				Float.parseFloat(request.getParameter(param[8])),
+				Float.parseFloat(request.getParameter(param[8])),
+				Float.parseFloat(request.getParameter(param[8])),
+				Double.parseDouble(request.getParameter(param[11])),
+				Double.parseDouble(request.getParameter(param[11])),
+				Float.parseFloat(request.getParameter(param[8])),
+				request.getParameter(param[0]),
+				request.getParameter(param[0]),
+				Integer.parseInt(request.getParameter(param[16]))
+				
+				);
 
-		if (query.size() > BATCH_SIZE && processFlag == false){
+		query.add(dataObj);
+
+		if (query.size() > BUFFER_SIZE && processFlag == false){
 			synchronized (query) {
 				processFlag = true;
 				processable.addAll(query);
@@ -45,7 +72,6 @@ public class reqDispatch extends HttpServlet {
 			}
 			processFlag = false;
 		}
-
 
 
 		try (PrintWriter out = response.getWriter()) {
@@ -63,19 +89,13 @@ public class reqDispatch extends HttpServlet {
 		}
 	}
 
-	public synchronized boolean  executeBatch(Queue<HttpServletRequest> queue){
+	public synchronized boolean  executeBatch(Queue<DataObj> queue){  // function which parses the queue and sends to data base
 
 		threadFlag = true;
-		final String DRIVER="com.mysql.jdbc.Driver",
-				URL = "jdbc:mysql://localhost:3306/clarotest",
-				USER = "root",
-				PASS = "root",
-				QUERY = "insert into testable values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		final String  QUERY = "insert into testable values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		boolean status = false;
-		HttpServletRequest query;
-		Iterator<HttpServletRequest> itr = queue.iterator();
-		String[] param = {"param1","param2","param3","param4","param5","param6","param7","param8","param9","param10","param11","param12","param13","param14","param15","param16","param17"};      //replace with parameter name here
-
+		DataObj query;
+		Iterator<DataObj> itr = queue.iterator();
 		try{
 			Connection conn = ds.getConnection(); // data source being used
 			conn.setAutoCommit(false);
@@ -84,29 +104,29 @@ public class reqDispatch extends HttpServlet {
 			while(itr.hasNext()){
 				query = itr.next();
 				// insert placeholder parameters here 
-				ps.setString(1, query.getParameter(param[0]));
-				ps.setString(2, query.getParameter(param[1]));
-				ps.setString(3, query.getParameter(param[2]));
-				ps.setString(4, query.getParameter(param[3]));
+				ps.setString(1, query.getVar1());
+				ps.setString(2, query.getVar2());
+				ps.setString(3, query.getVar3());
+				ps.setString(4, query.getVar4());
 
-				ps.setLong(5, Long.parseLong(query.getParameter(param[4])));
-				ps.setLong(6, Long.parseLong(query.getParameter(param[5])));
-				ps.setLong(7, Long.parseLong(query.getParameter(param[6])));
-				ps.setLong(8, Long.parseLong(query.getParameter(param[7])));
+				ps.setLong(5, query.getVar5());
+				ps.setLong(6, query.getVar6());
+				ps.setLong(7, query.getVar7());
+				ps.setLong(8, query.getVar8());
 
-				ps.setFloat(9, Float.parseFloat(query.getParameter(param[8])));
-				ps.setFloat(10, Float.parseFloat(query.getParameter(param[9])));
-				ps.setFloat(11, Float.parseFloat(query.getParameter(param[10])));
+				ps.setFloat(9, query.getVar9());
+				ps.setFloat(10,query.getVar10());
+				ps.setFloat(11,query.getVar11());
 
-				ps.setDouble(12, Double.parseDouble(query.getParameter(param[11])));
-				ps.setDouble(13, Double.parseDouble(query.getParameter(param[12])));
+				ps.setDouble(12, query.getVar12());
+				ps.setDouble(13, query.getVar13());
 
-				ps.setFloat(14, Float.parseFloat(query.getParameter(param[13])));
+				ps.setFloat(14, query.getVar14());
 
-				ps.setString(15, query.getParameter(param[14]));
-				ps.setString(16, query.getParameter(param[15]));
+				ps.setString(15, query.getVar15());
+				ps.setString(16, query.getVar16());
 
-				ps.setInt(17, Integer.parseInt(query.getParameter(param[16])));
+				ps.setInt(17, query.getVar17());
 
 
 				ps.executeUpdate();
@@ -127,19 +147,21 @@ public class reqDispatch extends HttpServlet {
 	public void init() throws ServletException {
 		super.init(); //To change body of generated methods, choose Tools | Templates.
 
-
+		// data source datasource fetching
 		try {
 			ds = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/clarotest");
 		} catch (NamingException ex) {
 			Logger.getLogger(reqDispatch.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
-
-
+		
 		query = new LinkedList<>();
 
+		
+		
+		// timer task
 		TimerTask timedClean = new TimerTask() {
-			Queue<HttpServletRequest> processable = new LinkedList<>();
+			Queue<DataObj> processable = new LinkedList<>();
 			@Override
 			public void run() {
 				synchronized (query) {
