@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
-    <wb-module deploy-name="clarotest">
+    <wb-module deploy-name="multiQueryLoadBalancer">
         <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
-        <property name="context-root" value="clarotest"/>
-        <property name="java-output-path" value="/clarotest/build/classes"/>
+        <property name="java-output-path" value="/multiQueryLoadBalancer/build/classes"/>
+        <property name="context-root" value="multiQueryLoadBalancer"/>
     </wb-module>
 </project-modules>
