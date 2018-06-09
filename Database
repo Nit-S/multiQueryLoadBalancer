@@ -1,0 +1,19 @@
+CREATE TABLE `testable` (
+  `string1` varchar(20) DEFAULT NULL,
+  `string2` varchar(20) DEFAULT NULL,
+  `string3` varchar(20) DEFAULT NULL,
+  `string4` varchar(20) DEFAULT NULL,
+  `long1` bigint(15) DEFAULT NULL,
+  `long2` bigint(15) DEFAULT NULL,
+  `long3` bigint(15) DEFAULT NULL,
+  `long4` bigint(15) DEFAULT NULL,
+  `float1` float(15,5) DEFAULT NULL,
+  `float2` float(15,5) DEFAULT NULL,
+  `float3` float(15,5) DEFAULT NULL,
+  `double1` double(20,8) DEFAULT NULL,
+  `double2` double(20,8) DEFAULT NULL,
+  `floa4` float(15,5) DEFAULT NULL,
+  `string5` varchar(20) DEFAULT NULL,
+  `string6` varchar(20) DEFAULT NULL,
+  `intt1` int(8) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
